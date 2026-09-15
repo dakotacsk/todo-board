@@ -1016,3 +1016,58 @@ button.bar-group:hover {
     min-height: 32px;
   }
 }
+fieldset {
+  border: 0;
+  padding: 0;
+  margin: 0;
+  min-width: 0;
+}
+button:disabled {
+  cursor: default;
+  opacity: 0.5;
+}
+.signin {
+  display: grid;
+  gap: 16px;
+  margin-top: 28px;
+}
+.migration {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  border: 1px solid #cbd3bd;
+  background: #e9eddc;
+  padding: 16px;
+  border-radius: 8px;
+  margin-bottom: 26px;
+}
+.migration > div {
+  flex: 1;
+}
+.migration strong {
+  font-weight: 500;
+}
+.import-mode {
+  margin: 20px 0 12px;
+}
+.drag-handle {
+  margin-right: auto;
+  color: var(--muted);
+  padding: 3px 7px;
+  cursor: grab;
+}
+.local {
+  line-height: 1.5;
+}
+@media (max-width: 640px) {
+  .migration {
+    flex-wrap: wrap;
+  }
+  .migration > div {
+    flex-basis: 100%;
+  }
+  .list .reorder {
+    width: 100%;
+    padding: 0 10px 6px;
+  }
+}

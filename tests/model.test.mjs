@@ -104,3 +104,34 @@ test("manual ordering persists and cross-column moves preserve completion semant
   );
   assert.equal(moveTask(tasks, "a", "Todo", "a"), tasks);
 });
+
+test("cloud import merges missing records without overwriting existing tasks", async () => {
+  const { mergeBackup } = await import("../src/backup.js");
+  const current = { ...initial(), tasks: [{ ...task, title: "Newer task" }] };
+  const incoming = {
+    ...initial(),
+    tasks: [task, { ...task, id: "new", dueDate: "2026-09-18" }],
+  };
+  const result = mergeBackup(current, incoming, "merge");
+  assert.equal(result.tasks.length, 2);
+  assert.equal(result.tasks[0].title, "Newer task");
+  assert.equal(result.tasks[1].dueDate, "2026-09-18");
+  assert.equal(mergeBackup(result, incoming, "merge").tasks.length, 2);
+  assert.equal(
+    mergeBackup(current, incoming, "replace").tasks[0].title,
+    "Task",
+  );
+});
+
+test("stale edit checks compare values rather than Firestore field order", async () => {
+  const { sameRecord } = await import("../model.js");
+  assert.equal(
+    sameRecord({ id: "x", title: "A" }, { title: "A", id: "x" }),
+    true,
+  );
+  assert.equal(
+    sameRecord({ id: "x", title: "A" }, { id: "x", title: "B" }),
+    false,
+  );
+  assert.equal(sameRecord(undefined, { id: "x" }), false);
+});

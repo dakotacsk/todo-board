@@ -127,3 +127,12 @@ export function moveTask(tasks, id, status, targetId = null, after = false) {
   );
   return next;
 }
+
+export function sameRecord(a, b) {
+  return (
+    Boolean(a && b) &&
+    [...new Set([...Object.keys(a), ...Object.keys(b)])].every(
+      (key) => a[key] === b[key],
+    )
+  );
+}

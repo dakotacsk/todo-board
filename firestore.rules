@@ -1,0 +1,22 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function owner(uid) {
+      return request.auth != null && request.auth.uid == uid
+        && request.auth.token.email_verified == true
+        && request.auth.token.email == 'dakotacsk@gmail.com';
+    }
+    match /users/{uid}/boards/main {
+      allow read: if owner(uid);
+      allow create, update: if owner(uid)
+        && request.resource.data.keys().hasOnly(['version','categories','tasks','revision'])
+        && request.resource.data.version == 1
+        && request.resource.data.categories is list
+        && request.resource.data.tasks is list
+        && request.resource.data.tasks.size() <= 3000
+        && request.resource.data.categories.size() <= 100
+        && request.resource.data.revision is int
+        && request.resource.data.revision == (resource == null ? 1 : resource.data.revision + 1);
+    }
+  }
+}
