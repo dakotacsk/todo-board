@@ -48,3 +48,59 @@ test("backup validation rejects corrupt and duplicate data", () => {
     }),
   );
 });
+
+test("due dates accept older backups and reject impossible dates", async () => {
+  const { validDueDate, dueInfo } = await import("../model.js");
+  assert.equal(validDueDate("2028-02-29"), true);
+  assert.equal(validDueDate("2026-02-29"), false);
+  assert.equal(validDueDate("2026-13-01"), false);
+  assert.equal(validate({ ...initial(), tasks: [task] }).tasks.length, 1);
+  assert.throws(() =>
+    validate({ ...initial(), tasks: [{ ...task, dueDate: "2026-02-30" }] }),
+  );
+  assert.equal(
+    dueInfo({ ...task, dueDate: "2026-09-15" }, "2026-09-15").label,
+    "Due today",
+  );
+  assert.equal(
+    dueInfo({ ...task, dueDate: "2026-09-14" }, "2026-09-15").overdue,
+    true,
+  );
+  assert.equal(
+    dueInfo({ ...task, status: "Done", dueDate: "2026-09-14" }, "2026-09-15")
+      .overdue,
+    false,
+  );
+  assert.equal(dueInfo(task), null);
+});
+
+test("manual ordering persists and cross-column moves preserve completion semantics", async () => {
+  const { moveTask } = await import("../model.js");
+  const tasks = [
+    { ...task, id: "a" },
+    { ...task, id: "b" },
+    { ...task, id: "c" },
+  ];
+  const moved = moveTask(tasks, "c", "Todo", "a");
+  assert.deepEqual(
+    moved.map((t) => t.id),
+    ["c", "a", "b"],
+  );
+  assert.deepEqual(
+    moveTask(moved, "c", "Todo", "a", true).map((t) => t.id),
+    ["a", "c", "b"],
+  );
+  const done = moveTask(tasks, "b", "Done");
+  assert.equal(done[2].status, "Done");
+  assert.ok(done[2].completedAt);
+  assert.equal(
+    moveTask(done, "b", "Done", "a")[0].completedAt,
+    done[2].completedAt,
+  );
+  assert.equal(moveTask(done, "b", "Todo", "a")[0].completedAt, null);
+  assert.deepEqual(
+    JSON.parse(JSON.stringify(moved)).map((t) => t.id),
+    ["c", "a", "b"],
+  );
+  assert.equal(moveTask(tasks, "a", "Todo", "a"), tasks);
+});

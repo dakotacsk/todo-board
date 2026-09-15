@@ -942,3 +942,77 @@ button.bar-group:hover {
   font-size: 10px;
   margin-bottom: 8px;
 }
+.due-date {
+  display: block;
+  margin-top: 12px;
+  font-size: 11px;
+  color: var(--muted);
+}
+.due-date.overdue {
+  color: #a0443d;
+}
+.list .due-date {
+  margin-top: 0;
+  flex-shrink: 0;
+}
+@media (max-width: 640px) {
+  .list .due-date {
+    width: 100%;
+  }
+}
+.card {
+  position: relative;
+  padding: 0;
+}
+.card-open {
+  display: block;
+  text-align: left;
+  width: 100%;
+  padding: 15px 15px 8px;
+  border-radius: 7px;
+  color: inherit;
+}
+.card-open:hover {
+  background: transparent;
+}
+.reorder {
+  display: flex;
+  justify-content: flex-end;
+  gap: 2px;
+  padding: 0 8px 5px;
+}
+.reorder button {
+  padding: 3px 7px;
+  color: var(--muted);
+  min-width: 28px;
+}
+.reorder button:disabled {
+  opacity: 0.25;
+  cursor: default;
+}
+.card.drop-before {
+  box-shadow: 0 -3px 0 var(--accent);
+}
+.list .card {
+  gap: 0;
+}
+.list .card-open {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 15px;
+  flex: 1;
+  min-width: 0;
+}
+.list .reorder {
+  padding: 0 8px;
+}
+@media (max-width: 640px) {
+  .list .card-open {
+    flex-wrap: wrap;
+  }
+  .reorder button {
+    min-width: 36px;
+    min-height: 32px;
+  }
+}

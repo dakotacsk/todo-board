@@ -9,6 +9,8 @@ A personal, light-mode task board styled to match [dakotacsk.com](https://dakota
 - Create tasks with **New task** or **C**. Add notes, category, priority, and 0–100 points.
 - Move tasks through Backlog, Todo, In progress, and Done. Drag cards on desktop or edit Status on any device.
 - Create, rename, recolor, and remove categories. Removing a category preserves its tasks.
+- Set optional due dates; cards show due-today and overdue labels. Dates and manual order are included in backups.
+- Reorder cards by dragging onto another card to insert above it, or use the up/down buttons. Dropping onto a column moves the card to its end.
 - Search and filter tasks; switch between board and list layouts.
 - Activity charts show daily history by month and hourly history for any date, in the browser's local timezone.
 - Completing a task records a timestamp. Reopening/deleting removes the credit; changing points updates historical totals. This measures currently completed tasks, not an immutable event ledger.

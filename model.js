@@ -41,6 +41,35 @@ export function totals(tasks, date, hour = null) {
       { points: 0, tickets: 0 },
     );
 }
+export function validDueDate(value) {
+  if (typeof value !== "string" || !/^\d{4}-\d{2}-\d{2}$/.test(value))
+    return false;
+  const parsed = new Date(`${value}T12:00:00`);
+  return Number.isFinite(parsed.getTime()) && dateKey(parsed) === value;
+}
+export function dueInfo(task, today = dateKey(new Date())) {
+  if (!task.dueDate) return null;
+  const overdue = task.status !== "Done" && task.dueDate < today;
+  const isToday = task.dueDate === today;
+  const formatted = new Date(`${task.dueDate}T12:00:00`).toLocaleDateString(
+    undefined,
+    {
+      month: "short",
+      day: "numeric",
+      ...(task.dueDate.slice(0, 4) !== today.slice(0, 4)
+        ? { year: "numeric" }
+        : {}),
+    },
+  );
+  return {
+    overdue,
+    label: overdue
+      ? `Overdue · ${formatted}`
+      : isToday
+        ? "Due today"
+        : `Due ${formatted}`,
+  };
+}
 export function validate(data) {
   if (
     !data ||
@@ -74,6 +103,7 @@ export function validate(data) {
       t.points < 0 ||
       t.points > 100 ||
       !["None", "Low", "Medium", "High"].includes(t.priority) ||
+      (t.dueDate != null && t.dueDate !== "" && !validDueDate(t.dueDate)) ||
       (t.category && !ids.has(t.category)) ||
       (t.status === "Done" &&
         (!t.completedAt || !Number.isFinite(Date.parse(t.completedAt))))
@@ -82,4 +112,18 @@ export function validate(data) {
     taskIds.add(t.id);
   }
   return data;
+}
+
+// The array is the saved manual order; moving does not alter task identity.
+export function moveTask(tasks, id, status, targetId = null, after = false) {
+  const task = tasks.find((t) => t.id === id);
+  if (!task || id === targetId || !statuses.includes(status)) return tasks;
+  const next = tasks.filter((t) => t.id !== id);
+  const index = targetId ? next.findIndex((t) => t.id === targetId) : -1;
+  next.splice(
+    index < 0 ? next.length : index + (after ? 1 : 0),
+    0,
+    transition(task, status),
+  );
+  return next;
 }

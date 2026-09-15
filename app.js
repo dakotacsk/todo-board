@@ -6,6 +6,8 @@ import {
   transition,
   totals,
   validate,
+  dueInfo,
+  moveTask,
 } from "./model.js";
 const KEY = "daymark.data.v1";
 const $ = (s) => document.querySelector(s);
@@ -88,9 +90,10 @@ function renderLock() {
 function getCategory(id) {
   return data.categories.find((c) => c.id === id);
 }
-function taskCard(t) {
+function taskCard(t, index, group) {
   const c = getCategory(t.category);
-  return `<button class="card" draggable="true" data-task="${esc(t.id)}" style="--cat:${c?.color || "#99958b"}" aria-label="Edit ${esc(t.title)}"><div class="card-id">DM-${esc(t.number)}${t.priority === "High" ? " · High priority" : ""}</div><div class="card-title">${esc(t.title)}</div><div class="card-footer">${c ? `<span class="tag">${esc(c.name)}</span>` : "<span>Uncategorized</span>"}<span class="points">${t.points} pts</span></div></button>`;
+  const due = dueInfo(t);
+  return `<article class="card" draggable="true" data-task="${esc(t.id)}" style="--cat:${c?.color || "#99958b"}"><button class="card-open" draggable="true" data-edit="${esc(t.id)}" aria-label="Edit ${esc(t.title)}"><div class="card-id">DM-${esc(t.number)}${t.priority === "High" ? " · High priority" : ""}</div><div class="card-title">${esc(t.title)}</div><div class="card-footer">${c ? `<span class="tag">${esc(c.name)}</span>` : "<span>Uncategorized</span>"}<span class="points">${t.points} pts</span></div>${due ? `<span class="due-date ${due.overdue ? "overdue" : ""}">${esc(due.label)}</span>` : ""}</button><div class="reorder"><button data-move="up" aria-label="Move ${esc(t.title)} up" ${index === 0 ? "disabled" : ""}>↑</button><button data-move="down" aria-label="Move ${esc(t.title)} down" ${index === group.length - 1 ? "disabled" : ""}>↓</button></div></article>`;
 }
 function render() {
   document.title =
@@ -182,7 +185,60 @@ function renderTasks() {
     .querySelectorAll("[data-add]")
     .forEach((b) => (b.onclick = () => editTask(null, b.dataset.add)));
   document.querySelectorAll("[data-task]").forEach((b) => {
-    b.onclick = () => editTask(b.dataset.task);
+    b.querySelector("[data-edit]").onclick = () => editTask(b.dataset.task);
+    b.querySelectorAll("[data-move]").forEach(
+      (control) =>
+        (control.onclick = () => {
+          const task = data.tasks.find((t) => t.id === b.dataset.task);
+          const group = tasks.filter((t) => t.status === task.status);
+          const index = group.findIndex((t) => t.id === task.id);
+          const down = control.dataset.move === "down";
+          const target = group[index + (down ? 1 : -1)];
+          if (
+            target &&
+            commit({
+              ...data,
+              tasks: moveTask(
+                data.tasks,
+                task.id,
+                task.status,
+                target.id,
+                down,
+              ),
+            })
+          ) {
+            render();
+            const moved = [...document.querySelectorAll("[data-task]")].find(
+              (el) => el.dataset.task === task.id,
+            );
+            moved?.querySelector("[data-edit]")?.focus();
+            toast("Task moved " + (down ? "down" : "up"));
+          }
+        }),
+    );
+    b.ondragover = (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      b.classList.add("drop-before");
+    };
+    b.ondragleave = () => b.classList.remove("drop-before");
+    b.ondrop = (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      const target = data.tasks.find((t) => t.id === b.dataset.task);
+      if (
+        commit({
+          ...data,
+          tasks: moveTask(
+            data.tasks,
+            e.dataTransfer.getData("text/plain"),
+            target.status,
+            target.id,
+          ),
+        })
+      )
+        render();
+    };
     b.ondragstart = (e) => {
       e.dataTransfer.setData("text/plain", b.dataset.task);
       e.dataTransfer.effectAllowed = "move";
@@ -200,9 +256,7 @@ function renderTasks() {
       if (
         commit({
           ...data,
-          tasks: data.tasks.map((t) =>
-            t.id === id ? transition(t, col.dataset.status) : t,
-          ),
+          tasks: moveTask(data.tasks, id, col.dataset.status),
         })
       )
         render();
@@ -231,7 +285,7 @@ function editTask(id, status = "Todo") {
     priority: "None",
   };
   modal(
-    `<form id="task-form"><div class="modal-head"><h2>${old ? "Edit task" : "New task"}</h2><button type="button" data-close aria-label="Close">×</button></div><div class="fields"><label>Title<input name="title" value="${esc(t.title)}" placeholder="What would you like to get done?" maxlength="200" required autofocus></label><label>Notes<textarea name="description" placeholder="A few details, if you need them…" maxlength="20000">${esc(t.description)}</textarea></label><div class="row"><label>Status<select name="status">${options(statuses, t.status)}</select></label><label>Category<select name="category"><option value="">Uncategorized</option>${data.categories.map((c) => `<option value="${esc(c.id)}" ${c.id === t.category ? "selected" : ""}>${esc(c.name)}</option>`).join("")}</select></label></div><div class="row"><label>Points<input name="points" type="number" min="0" max="100" step="1" required value="${t.points}"></label><label>Priority<select name="priority">${options(["None", "Low", "Medium", "High"], t.priority)}</select></label></div>${old?.completedAt ? `<p class="help">Completed ${esc(new Date(old.completedAt).toLocaleString())}. Reopening removes this completion from Activity.</p>` : ""}</div><div class="actions">${old ? '<button type="button" class="danger" id="delete-task">Delete task</button>' : ""}<button type="button" data-close>Cancel</button><button class="primary">${old ? "Save changes" : "Create task"}</button></div></form>`,
+    `<form id="task-form"><div class="modal-head"><h2>${old ? "Edit task" : "New task"}</h2><button type="button" data-close aria-label="Close">×</button></div><div class="fields"><label>Title<input name="title" value="${esc(t.title)}" placeholder="What would you like to get done?" maxlength="200" required autofocus></label><label>Notes<textarea name="description" placeholder="A few details, if you need them…" maxlength="20000">${esc(t.description)}</textarea></label><div class="row"><label>Status<select name="status">${options(statuses, t.status)}</select></label><label>Category<select name="category"><option value="">Uncategorized</option>${data.categories.map((c) => `<option value="${esc(c.id)}" ${c.id === t.category ? "selected" : ""}>${esc(c.name)}</option>`).join("")}</select></label></div><div class="row"><label>Points<input name="points" type="number" min="0" max="100" step="1" required value="${t.points}"></label><label>Priority<select name="priority">${options(["None", "Low", "Medium", "High"], t.priority)}</select></label></div><label>Due date<input name="dueDate" type="date" min="0001-01-01" max="9999-12-31" value="${esc(t.dueDate || "")}"></label>${old?.completedAt ? `<p class="help">Completed ${esc(new Date(old.completedAt).toLocaleString())}. Reopening removes this completion from Activity.</p>` : ""}</div><div class="actions">${old ? '<button type="button" class="danger" id="delete-task">Delete task</button>' : ""}<button type="button" data-close>Cancel</button><button class="primary">${old ? "Save changes" : "Create task"}</button></div></form>`,
   );
   $("#task-form").onsubmit = (e) => {
     e.preventDefault();
@@ -247,6 +301,7 @@ function editTask(id, status = "Todo") {
       category: f.get("category"),
       points: Number(f.get("points")),
       priority: f.get("priority"),
+      dueDate: f.get("dueDate") || "",
       createdAt: old?.createdAt || new Date().toISOString(),
     };
     const updated = transition(base, f.get("status"));
