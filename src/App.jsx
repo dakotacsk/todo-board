@@ -57,7 +57,7 @@ function download(data) {
 function Brand() {
   return (
     <div className="brand">
-      <span className="mark">d</span>daymark
+      <img className="brand-logo" src={`${import.meta.env.BASE_URL}daymark-logo.png`} alt="" width="36" height="36" />daymark
     </div>
   );
 }
