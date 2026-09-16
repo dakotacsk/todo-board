@@ -2,11 +2,11 @@
 
 Personal task board for Dakota, matching the warm paper, olive, and handwriting styles of [dakotacsk.com](https://dakotacsk.com).
 
-## Firebase migration status
+## Deployment status
 
-The React/Vite client, Google sign-in, Firestore sync, owner-only rules, and GitHub Actions workflow are implemented. **Provisioning is pending personal-account Firebase CLI authorization.** `src/firebase-config.json` currently contains emulator placeholders; do not deploy this branch until real project configuration, Google provider, database, and deployment credentials are installed.
+Firebase project `daymark-dakotacsk` is owned by `dakotacsk@gmail.com`. The React app and owner-only Firestore rules are deployed at https://daymark-dakotacsk.web.app. Google authentication is enabled. The database uses the free tier in `us-east1`; no billing account is attached.
 
-The existing production board remains at https://dakotacsk.com/todo-board/ until the migration is deployed.
+GitHub automatic deployment credentials are awaiting approval. The existing production board remains at https://dakotacsk.com/todo-board/ until the migration is merged and Pages switches to Actions.
 
 ## Features
 
