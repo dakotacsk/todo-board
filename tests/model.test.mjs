@@ -104,3 +104,52 @@ test("manual ordering persists and cross-column moves preserve completion semant
   );
   assert.equal(moveTask(tasks, "a", "Todo", "a"), tasks);
 });
+
+test("cloud import merges missing records without overwriting existing tasks", async () => {
+  const { mergeBackup } = await import("../src/backup.js");
+  const current = { ...initial(), tasks: [{ ...task, title: "Newer task" }] };
+  const incoming = {
+    ...initial(),
+    tasks: [task, { ...task, id: "new", dueDate: "2026-09-18" }],
+  };
+  const result = mergeBackup(current, incoming, "merge");
+  assert.equal(result.tasks.length, 2);
+  assert.equal(result.tasks[0].title, "Newer task");
+  assert.equal(result.tasks[1].dueDate, "2026-09-18");
+  assert.equal(mergeBackup(result, incoming, "merge").tasks.length, 2);
+  assert.equal(
+    mergeBackup(current, incoming, "replace").tasks[0].title,
+    "Task",
+  );
+});
+
+test("stale edit checks compare values rather than Firestore field order", async () => {
+  const { sameRecord } = await import("../model.js");
+  assert.equal(
+    sameRecord({ id: "x", title: "A" }, { title: "A", id: "x" }),
+    true,
+  );
+  assert.equal(
+    sameRecord({ id: "x", title: "A" }, { id: "x", title: "B" }),
+    false,
+  );
+  assert.equal(sameRecord(undefined, { id: "x" }), false);
+});
+
+test("category analytics count only completions in the selected local period", async () => {
+  const { categoryCompletions } = await import('../model.js');
+  const data = { categories: [{ id: 'work', name: 'Work', color: '#607744' }], tasks: [
+    { ...task, status: 'Done', completedAt: new Date(2026, 8, 16, 12).toISOString() },
+    { ...task, id: '2', category: '', points: 0, status: 'Done', completedAt: new Date(2026, 8, 16, 13).toISOString() },
+    { ...task, id: '3', points: 8, status: 'Done', completedAt: new Date(2026, 7, 31, 12).toISOString() },
+    { ...task, id: '4', status: 'Todo', completedAt: new Date(2026, 8, 16, 12).toISOString() },
+  ] };
+  const rows = categoryCompletions(data, '2026-09');
+  assert.equal(rows.length, 2);
+  assert.equal(rows[0].points, 5);
+  assert.equal(rows[0].tickets, 1);
+  assert.equal(rows[0].share, 0.5);
+  assert.equal(rows[1].average, 0);
+  assert.equal(categoryCompletions(data, '2026-09-17').length, 0);
+  assert.equal(categoryCompletions(data, 'all')[0].points, 13);
+});
