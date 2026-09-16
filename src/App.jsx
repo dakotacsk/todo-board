@@ -11,6 +11,7 @@ import {
   dueInfo,
   moveTask,
   sameRecord,
+  categoryCompletions,
 } from "../model.js";
 import {
   watchAuth,
@@ -1189,6 +1190,28 @@ function Chart({ entries, label, onSelect }) {
     </>
   );
 }
+function CategoryAnalytics({ data, day, month }) {
+  const [period, setPeriod] = useState("month");
+  const rows = categoryCompletions(data, period === "all" ? "all" : period === "day" ? day : month);
+  const tickets = rows.reduce((n, row) => n + row.tickets, 0);
+  const points = rows.reduce((n, row) => n + row.points, 0);
+  return <section className="chart-panel">
+    <div className="chart-head">
+      <div><h2>Where your progress goes</h2><p className="help">Completed tickets by category · {period === "all" ? "All time" : period === "day" ? day : month}</p></div>
+      <label>Category breakdown<select value={period} onChange={e => setPeriod(e.target.value)}>
+        <option value="day">Selected day</option><option value="month">Selected month</option><option value="all">All time</option>
+      </select></label>
+    </div>
+    <p className="help">{tickets} tickets · {points} points · {tickets ? (points / tickets).toFixed(1) : "0"} average points per ticket</p>
+    {rows.length ? <div className="category-metrics">{rows.map(row => <div className="category-metric" key={row.id}>
+      <div className="category-metric-title"><span><i style={{ background: row.color }} />{row.name}</span><strong>{row.tickets} {row.tickets === 1 ? "ticket" : "tickets"} · {row.points} pts</strong></div>
+      <div className="category-meter" aria-hidden="true"><div style={{ width: `${row.share * 100}%`, background: row.color }} /></div>
+      <p className="help">{Math.round(row.share * 100)}% of completed tickets · {row.average.toFixed(1)} average pts</p>
+    </div>)}</div> : <p className="help">No completed tickets in this period. Finish a task or choose another period to see the breakdown.</p>}
+    <p className="help">Uses current task categories. Uncategorized tasks are included.</p>
+  </section>;
+}
+
 function Activity({ data, today, notify }) {
   const [month, setMonth] = useState(today.slice(0, 7)),
     [day, setDay] = useState(today);
@@ -1280,6 +1303,7 @@ function Activity({ data, today, notify }) {
         </div>
         <Chart entries={hourly} label="Hourly completions" onSelect={detail} />
       </section>
+      <CategoryAnalytics data={data} day={day} month={month} />
       <section className="chart-panel">
         <div className="chart-head">
           <h2>Completed on {day}</h2>

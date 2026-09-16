@@ -136,3 +136,19 @@ export function sameRecord(a, b) {
     )
   );
 }
+
+export function categoryCompletions(data, period = "all") {
+  const groups = new Map(data.categories.map(c => [c.id, { ...c, tickets: 0, points: 0 }]));
+  groups.set("", { id: "", name: "Uncategorized", color: "#85857c", tickets: 0, points: 0 });
+  for (const task of data.tasks) {
+    if (task.status !== "Done" || !task.completedAt) continue;
+    if (period !== "all" && !dateKey(task.completedAt).startsWith(period)) continue;
+    const group = groups.get(task.category) || groups.get("");
+    group.tickets++;
+    group.points += task.points;
+  }
+  const rows = [...groups.values()].filter(g => g.tickets > 0);
+  const tickets = rows.reduce((n, g) => n + g.tickets, 0);
+  return rows.map(g => ({ ...g, share: g.tickets / tickets, average: g.points / g.tickets }))
+    .sort((a, b) => b.tickets - a.tickets || b.points - a.points || a.name.localeCompare(b.name));
+}

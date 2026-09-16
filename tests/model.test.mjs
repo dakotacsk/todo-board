@@ -135,3 +135,21 @@ test("stale edit checks compare values rather than Firestore field order", async
   );
   assert.equal(sameRecord(undefined, { id: "x" }), false);
 });
+
+test("category analytics count only completions in the selected local period", async () => {
+  const { categoryCompletions } = await import('../model.js');
+  const data = { categories: [{ id: 'work', name: 'Work', color: '#607744' }], tasks: [
+    { ...task, status: 'Done', completedAt: new Date(2026, 8, 16, 12).toISOString() },
+    { ...task, id: '2', category: '', points: 0, status: 'Done', completedAt: new Date(2026, 8, 16, 13).toISOString() },
+    { ...task, id: '3', points: 8, status: 'Done', completedAt: new Date(2026, 7, 31, 12).toISOString() },
+    { ...task, id: '4', status: 'Todo', completedAt: new Date(2026, 8, 16, 12).toISOString() },
+  ] };
+  const rows = categoryCompletions(data, '2026-09');
+  assert.equal(rows.length, 2);
+  assert.equal(rows[0].points, 5);
+  assert.equal(rows[0].tickets, 1);
+  assert.equal(rows[0].share, 0.5);
+  assert.equal(rows[1].average, 0);
+  assert.equal(categoryCompletions(data, '2026-09-17').length, 0);
+  assert.equal(categoryCompletions(data, 'all')[0].points, 13);
+});

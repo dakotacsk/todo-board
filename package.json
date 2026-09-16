@@ -8,7 +8,9 @@
     "preview": "vite preview --host 127.0.0.1",
     "test": "node --test tests/model.test.mjs",
     "test:rules": "firebase emulators:exec --only firestore --project demo-daymark \"node --test tests/rules.test.mjs\"",
-    "deploy": "npm run build && firebase deploy --only hosting,firestore:rules"
+    "deploy": "npm run build && firebase deploy --only hosting,firestore:rules",
+    "check:secrets": "node scripts/check-secrets.mjs",
+    "hooks:install": "git config core.hooksPath .githooks"
   },
   "type": "module",
   "dependencies": {

@@ -5,3 +5,15 @@ dist/
 .env.local
 .env.*.local
 *.service-account.json
+
+# Credentials and local configuration
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*service-account*.json
+*service_account*.json
+*credentials*.json
+application_default_credentials.json
+gha-creds-*.json

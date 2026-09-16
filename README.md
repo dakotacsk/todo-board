@@ -69,3 +69,9 @@ The deployment identity needs Firebase Hosting Admin, Firebase Rules Admin, Fire
 A private document at `users/{uid}/boards/main` stores categories, tasks, manual order, and a revision. Atomic transactions reject stale revisions; individual editors also reject stale task/category edits. Cloud data is held in memory by the SDK; offline writes are disabled and pending edits are not reported as saved. On sign-out, React clears the board and closes editors.
 
 This compact personal-board model is capped at 750 KB, 3,000 tasks, and 100 categories to stay below Firestore's document limit. Export and prune older completed tasks if reached. No billing account, analytics, Cloud Functions, or paid App Hosting is required.
+
+## Credential safeguards
+
+The Firebase web configuration is intentionally public, as it is downloaded by every browser. Its API key does not authorize access to task data; Firestore rules enforce the verified owner account. Do not reuse this key for other Google APIs. Moving a browser key to a frontend environment variable would not make it secret.
+
+Run `npm run hooks:install` once per clone to install the staged-content credential check. CI also scans commits for common private-key, OAuth, service-account, GitHub, AWS, Slack, and Google API-key patterns. Only the `apiKey` property of this project's Firebase web config is exempt. Checks never print matched values. These pattern checks are a safeguard, not a guarantee; never place real credentials in frontend code, comments, fixtures, issues, or logs. Keep server credentials in a secret manager or GitHub Actions secrets. Local environment files and common credential filenames are ignored.

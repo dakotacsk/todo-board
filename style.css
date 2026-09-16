@@ -1071,3 +1071,12 @@ button:disabled {
     padding: 0 10px 6px;
   }
 }
+
+.category-metrics { display: grid; gap: 22px; margin: 26px 0; }
+.category-metric-title { display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.category-metric-title span { display: flex; align-items: center; gap: 8px; }
+.category-metric-title i { width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0; }
+.category-metric-title strong { font-size: 13px; font-weight: 500; }
+.category-meter { height: 8px; background: #e9e6e0; border-radius: 4px; overflow: hidden; margin-top: 10px; }
+.category-meter > div { height: 100%; border-radius: inherit; }
+.category-metric .help { margin-top: 6px; }
